@@ -1165,54 +1165,106 @@ int main() {
 
 //���̸��ǣ����Σ���qi pan fu gai
 #include <stdio.h>
-#include <limits.h>
+// ȫ����������
+char board[260][260];
 
-#define N 605
-#define INF INT_MAX
-
-int A[N];
-int m[N][N]; // ���ٳ˷�����
-
-void MatrixChain(int n) {
-    // ��ʼ����������ĳ˷�����Ϊ0
-    int i;
-    for (i = 1; i <= n; i++) {
-        m[i][i] = 0;
+// �ݹ麯��ʵ�����̸���
+void solveChessBoard(int tr, int tc, int dr, int dc, int size) {
+    int s; // �����̱߳���һ�� / half of the sub-board side length
+    if (size == 1) {
+        return;
     }
-    // ��̬�滮�����
-    int len, k;
-    for (len = 2; len <= n; len++) { // len �Ǿ������ĳ���
-        for (i = 1; i <= n - len + 1; i++) {
-            int j = i + len - 1;
-            m[i][j] = INF; // ��ʼ��Ϊ����ֵ
-            for (k = i; k < j; k++) {
-                int cost = m[i][k] + m[k + 1][j] + A[i - 1] * A[k] * A[j];
-                if (cost < m[i][j]) {
-                    m[i][j] = cost;
-                }
-            }
-        }
+    s = size / 2; // �����̷ָ�Ϊ4��������
+    // �ж����ⷽ�����ĸ����ޣ����������������޵Ľ��紦����һ��L�͹���
+    
+    if (dr < tr + s && dc < tc + s) {
+        // ���ⷽ�������Ͻ������� (Special square is in the top-left quadrant)
+       
+        board[tr + s - 1][tc + s]     = 'd'; // ���������̵������ 
+        board[tr + s]    [tc + s - 1] = 'd'; // ���������̵������ 
+        board[tr + s]    [tc + s]     = 'd'; // ���������̵������ 
+
+        solveChessBoard(tr, tc, dr, dc, s);                              // �ݹ鴦������������ 
+        solveChessBoard(tr, tc + s, tr + s - 1, tc + s, s);              // �ݹ鴦������������ 
+        solveChessBoard(tr + s, tc, tr + s, tc + s - 1, s);              // �ݹ鴦������������ 
+        solveChessBoard(tr + s, tc + s, tr + s, tc + s, s);              // �ݹ鴦������������ 
+
+    } else if (dr < tr + s && dc >= tc + s) {
+        // ���ⷽ�������Ͻ������� 
+        // �� 'c' �͹����������
+        
+        board[tr + s - 1][tc + s - 1] = 'c'; // ����
+        board[tr + s]    [tc + s - 1] = 'c'; // ����
+        board[tr + s]    [tc + s]     = 'c'; // ����
+
+        solveChessBoard(tr, tc + s, dr, dc, s);                          
+        solveChessBoard(tr, tc, tr + s - 1, tc + s - 1, s);              
+        solveChessBoard(tr + s, tc, tr + s, tc + s - 1, s);              
+        solveChessBoard(tr + s, tc + s, tr + s, tc + s, s);              
+
+    } else if (dr >= tr + s && dc < tc + s) {
+        // ���ⷽ�������½������� 
+        // �� 'b' �͹����������
+        
+        board[tr + s - 1][tc + s - 1] = 'b'; // ����
+        board[tr + s - 1][tc + s]     = 'b'; // ����
+        board[tr + s]    [tc + s]     = 'b'; // ����
+
+        solveChessBoard(tr + s, tc, dr, dc, s);                         
+        solveChessBoard(tr, tc, tr + s - 1, tc + s - 1, s);             
+        solveChessBoard(tr, tc + s, tr + s - 1, tc + s, s);              
+        solveChessBoard(tr + s, tc + s, tr + s, tc + s, s);             
+
+    } else { // dr >= tr + s && dc >= tc + s
+        // ���ⷽ�������½�������
+        // �� 'a' �͹����������
+        
+        board[tr + s - 1][tc + s - 1] = 'a'; // ����
+        board[tr + s - 1][tc + s]     = 'a'; // ����
+        board[tr + s]    [tc + s - 1] = 'a'; // ����
+
+        solveChessBoard(tr + s, tc + s, dr, dc, s);                      
+        solveChessBoard(tr, tc, tr + s - 1, tc + s - 1, s);             
+        solveChessBoard(tr, tc + s, tr + s - 1, tc + s, s);              
+        solveChessBoard(tr + s, tc, tr + s, tc + s - 1, s);              
     }
 }
 
 int main() {
-    int n;
-    scanf("%d", &n);
-    int i;
-    for (i = 0; i < n; i++) {
-        int x, y;
-        scanf("%d %d", &x, &y);
-        if (i == 0) {
-            A[i] = x;
+    int T;         // ���԰������� 
+    int K;         // ���̴�С���� 2^K x 2^K 
+    int X, Y;      // ���ⷽ������� (1-indexed) 
+    int board_size; // ���̵�ʵ�ʱ߳� 
+    int special_r, special_c; // ���ⷽ���0-indexed���� 
+    int i, j;      // ѭ����������ѭ���ⲿ���� 
+
+    scanf("%d", &T);
+    while (T--) {
+        scanf("%d %d %d", &K, &X, &Y);
+
+        board_size = 1 << K; // ���� 2^K /
+
+        special_r = X - 1; // ת��Ϊ
+        special_c = Y - 1;
+
+        // �ڵ��õݹ麯��ǰ�������ⷽ����Ϊ '*'
+        
+        // �ݹ麯��������������з���
+        
+        board[special_r][special_c] = '*';
+
+        solveChessBoard(0, 0, special_r, special_c, board_size);
+
+        // �������
+        for (i = 0; i < board_size; ++i) {
+            for (j = 0; j < board_size; ++j) {
+                printf("%c", board[i][j]);
+            }
+            printf("\n");
         }
-        A[i + 1] = y;
     }
-    MatrixChain(n);
-    printf("%d\n", m[1][n]);
     return 0;
 }
-
-
 
 
 
